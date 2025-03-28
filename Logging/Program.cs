@@ -7,7 +7,11 @@ namespace Logging
     {
         static void Main(string[] args)
         {
-
+            PathFinder fileLogger = new(new FileLogWritter());
+            PathFinder consoleLogger = new(new ConsoleLogWritter());
+            PathFinder secureFileLogger = new(new SecureLogWritter(new FileLogWritter()));
+            PathFinder secureConsoleLogger = new(new SecureLogWritter(new ConsoleLogWritter()));
+            PathFinder consoleAndSecureFileLogger = new(new MultiLogWritter(new() { new ConsoleLogWritter(), new SecureLogWritter(new FileLogWritter()) }));
         }
     }
 
@@ -27,24 +31,21 @@ namespace Logging
         }
     }
 
-    class SecureConsoleLogWritter : ConsoleLogWritter
+    class SecureLogWritter : ILogger
     {
-        public override void WriteError(string message)
-        {
-            if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
-            {
-                base.WriteError(message);
-            }
-        }
-    }
+        private readonly ILogger _logger;
 
-    class SecureFileLogWritter : FileLogWritter
-    {
-        public override void WriteError(string message)
+        public SecureLogWritter(ILogger logger)
+        {
+            ArgumentNullException.ThrowIfNull(logger);
+            _logger = logger;
+        }
+
+        public void WriteError(string message)
         {
             if (DateTime.Now.DayOfWeek == DayOfWeek.Friday)
             {
-                base.WriteError(message);
+                _logger.WriteError(message);
             }
         }
     }
